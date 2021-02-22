@@ -4,29 +4,26 @@ from bs4 import BeautifulSoup as bs
 from urllib.request import urlopen
 from urllib.parse import quote_plus
 
-url = 'http://bl-h5-as.robotbona.com/'
-idpw = 'danhui1639'
 driver = webdriver.Chrome('chromedriver.exe')
-img = ''
-url = ''
-plusUrl = ''
 SCROLL_PAUSE_SEC = 1.5
-crawl_num = 0
-
 baseUrl = 'https://search.naver.com/search.naver?where=image&sm=tab_jum&query='
 
 
 def set_search_object():
-    global crawl_num, url, plusUrl
-    plusUrl = input('검색어 입력: ')
+    plus_urls = input('검색어 입력(띄어쓰기로 구분): ')
+    plus_url_list = plus_urls.split(' ')
     crawl_num = int(input('크롤링할 갯수 입력(100개 단위): 약 '))
 
-    url = baseUrl + quote_plus(plusUrl)  # 한글 검색 자동 변환
-    driver.get(url)
+    for p_url in plus_url_list:
+        print(p_url)
+
+        url = baseUrl + quote_plus(p_url)  # 한글 검색 자동 변환
+        driver.get(url)
+        scroll(crawl_num)
+        get_images(p_url)
 
 
-def scroll():
-    global crawl_num
+def scroll(crawl_num):
     scroll_num = int(crawl_num/70)
     last_height = driver.execute_script("return document.body.scrollHeight")
     for i in range (scroll_num):
@@ -35,8 +32,7 @@ def scroll():
         new_height = driver.execute_script("return document.body.scrollHeight")
 
 
-def get_images():
-    global plusUrl
+def get_images(p_url):
     html = driver.page_source
     soup = bs(html, "html.parser")
     img = soup.find_all(class_='_image')
@@ -44,24 +40,22 @@ def get_images():
     print(len(img))
     # print(img)
     for i in img:
-        imgUrl = i['src']
-        if imgUrl[0] != 'h':
-            imgUrl = i['data-lazy-src']
+        img_url = i['src']
+        if img_url[0] != 'h':
+            img_url = i['data-lazy-src']
         print(n)
         try:
-            with urlopen(imgUrl) as f:
-                with open('./images/' + plusUrl + '_' + str(n) + '.jpg', 'wb') as h:  # w - write b - binary
+            with urlopen(img_url) as f:
+                with open('./images/' + p_url + '_' + str(n) + '.jpg', 'wb') as h:  # w - write b - binary
                     img = f.read()
                     h.write(img)
         except:
             pass
         n += 1
-        # if n > crawl_num:
-        #     break
-    print('Image Crawling is done.')
+    print(p_url, ' Image Crawling is done.')
 
 
 if __name__ == '__main__':
     set_search_object()
-    scroll()
-    get_images()
+    # scroll()
+    # get_images()
